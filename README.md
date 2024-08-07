@@ -1,5 +1,5 @@
 # FS-Classifiction-CF
-1.Match_to_cats_across_years (rmd file)
+1. Match_to_cats_across_years (rmd file)
 Download the Financial Statement and Notes Datasets from SEC with XBRL
 read broad_cat_with_aggregation_v2.csv 
 export pre_20xx.csv and sub_20xx.csv files
@@ -20,12 +20,17 @@ Display correlations
 Read df.sav(in data/df.sav.zip)
 Export labels_to_ids_1.sav, ids_to_labels_1.sav(in data zip folder)
 Export model_disagg_broad_cat.sav(in data zip folder)
+export tfidf_disagg_1.sav(in data zip folder)
 
-5. Modeling_with_loc_broad_cat_part2_V3_oversampling.ipynb
-Select column (plabel, broad_cat, contain “interact”, contain “presence”//plabel, broad_cat, plabel_proc ) and clean duplicates.
-Data preprocessing for plabel, which is originally text data, oversampling for splitting train and text data
-(remove stopwords, remove punctuation, create bigrams(try) and trigram(not try), stemming, Create sentence again)
-Set current disagg and use TF-IDF to extract features and export vectorizer
-Cross-validation
+6. Modeling_with_loc_broad_cat_part2_V3_oversampling.ipynb
+Read df.sav(in data/df.sav.zip)
+export data_with_predicted_broad_cat_v3.csv, df_with_predicted_broad_cat_v3.sav (in data zip folder)
 
-7. Modeling_with_loc_lvl_step_part1_v4_all_disagg
+7. Modeling_with_loc_lvl_step_part1_v4_all_disagg.ipynb
+read df_with_predicted_broad_cat_v3.sav (in a data zip folder)
+Put them together to a dataframe and export df_hierarchy.sav(in data zip folder)
+Export df_with_loc_lvl_step_v4.sav(in data zip folder)
+
+8. Modeling with loc lvl step part2 v4 xg final
+read df_with_loc_lvl_step_v4.sav(in data zip folder), df_hierarchy.sav
+
