@@ -1,0 +1,303 @@
+---
+title: "Match_to_broad_cat"
+author: "George Batta"
+date: '2022-09-27'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readr)
+library(dplyr)
+```
+
+
+
+
+These were obtained from this address, which has monthly files from January 2009 - August 2022:
+
+https://www.sec.gov/dera/data/financial-statement-and-notes-data-set.html
+
+
+pre.tsv gives the line items and associated labels
+
+sub.tsv gives filing and issuer-level information. We restrict to quarterly (10-Q) and annual (10-K) filings, and also exclude financial firms (sic [Standard Industrial Classifiction] between 6000 and 6999)
+
+broad_cat.csv is a categorization file for the tags, which I constructed in `XBRL_preliminary.Rmd`. It includes, at present, the 5 taxonomies from 2018 to 2022, inclusive.
+
+This restricts to 5 categories:
+
+Revenues
+Operating Expense
+Non-operating items
+Interest Expense
+Tax Expense
+
+# Initialize parameters to read data
+
+```{r}
+# Initialize list of years and quarters
+year = 2019:2022
+quarter = c("q1", "q2", "q3", "q4")
+months = sprintf("%02d", 1:12)
+
+# get current year: data is obtained monthly for current year, (current year - 1) and (current year - 2)
+current_year = strtoi(format(Sys.Date(), "%Y"))
+
+
+```
+
+
+
+# Code for Reading files
+
+## Pre files
+```{r}
+# CODE FOR READING FILES
+
+for(y in year){
+  pre <- tibble()
+  
+  print(c("Year:", y)) #print year in the loop
+  
+  if(y < current_year - 2){
+  
+  for(q in quarter){
+    assign(paste("pre", "_", y, "_", q, sep = ""),
+             as_tibble(read_tsv(paste(getwd(),"/",y, q, "_notes", "/", "pre.tsv", sep = "")))) #assign to dataframe on quarters
+    
+    # add to tibble
+    pre <- bind_rows(pre, get(paste("pre", "_", y, "_", q, sep = "")))
+    
+    rm(list = paste("pre", "_", y, "_", q, sep = ""))
+    
+    print(nrow(pre))
+  }
+    
+  }
+   else{
+     
+      for(q in quarter){
+    tryCatch({
+
+        assign(paste("pre", "_", y, "_",q, sep = ""), #try assigning on quarters
+             as_tibble(read_tsv(paste(getwd(),"/",y, q, "_notes", "/", "pre.tsv", sep = ""))))
+      
+      # add to tibble
+      pre <- bind_rows(pre, get(paste("pre", "_", y, "_", q, sep = "")))
+      
+      rm(list = paste("pre", "_", y, "_", q, sep = ""))
+      
+      print(nrow(pre))
+      },
+        error = function(err){
+        print("file not found, trying months") 
+    
+        use_months <<- TRUE
+        
+      }
+  )
+
+      }
+     {
+     if(use_months == TRUE){
+       for(m in months){
+        tryCatch({
+          assign(paste("pre", "_", y, "_",m, sep = ""), #or assign on months
+                 as_tibble(read_tsv(paste(getwd(),"/",y, "_", m, "_notes", "/", "pre.tsv", sep = ""))))
+          
+          # add to tibble
+          pre <- bind_rows(pre, get(paste("pre", "_", y, "_",m, sep = "")))
+          
+          rm(list = paste("pre", "_", y, "_",m, sep = ""))
+          print(nrow(pre))
+        },
+        error = function(err2){
+          print("file with month not found, trying next")
+          
+          skip_to_next  <<- TRUE
+          
+        }
+        
+      )
+         if(skip_to_next == TRUE){ 
+          next 
+          }
+         
+       }
+     }
+  }
+   }
+  
+  write.csv(pre, paste("pre_",y,".csv", sep = ""))
+  print(paste("pre_",y,".csv", " is exported", sep = ""))
+  
+}
+```
+
+
+```{r}
+rm(pre)
+```
+
+
+```{r}
+#update.packages(checkBuilt=TRUE, ask=FALSE)
+```
+
+
+```{r}
+y <- 2019
+q <- "q1"
+```
+
+```{r}
+paste("sub_table", "_", y, "_", q, sep = "")
+```
+```{r}
+read.csv("sub.tsv", sep = "\t")
+```
+
+```{r}
+read_tsv(paste(getwd(),"/",y, q, "_notes", "/", "sub.tsv", sep = ""))
+```
+
+
+
+```{r}
+ assign(paste("sub_table", "_", y, "_", q, sep = ""),
+               as_tibble(read_tsv(paste(getwd(),"/",y, q, "_notes", "/", "sub.tsv", sep = ""))))
+```
+
+
+## Sub Files
+```{r}
+# CODE FOR READING FILES
+
+for(y in year){
+  sub <- tibble()
+  
+  print(c("Year:", y)) #print year in the loop
+  
+  if(y < current_year - 2){
+  
+    for(q in quarter){
+      assign(paste("sub", "_", y, "_", q, sep = ""),
+               as_tibble(read.csv(paste(getwd(),"/",y, q, "_notes", "/", "sub.tsv", sep = ""), sep = "\t"))) #assign to dataframe on quarters
+      
+      # add to tibble
+      sub <- bind_rows(sub_table, get(paste("sub", "_", y, "_", q, sep = "")))
+      
+      rm(list = paste("sub", "_", y, "_", q, sep = ""))
+      
+      print(nrow(sub_table))
+    }
+    
+  }
+   else{
+     
+      for(q in quarter){
+    tryCatch({
+
+        assign(paste("sub", "_", y, "_",q, sep = ""), #try assigning on quarters
+             as_tibble(read.csv(paste(getwd(),"/",y, q, "_notes", "/", "sub.tsv", sep = ""), sep = "\t")))
+      
+      # add to tibble
+      sub <- bind_rows(sub, get(paste("sub", "_", y, "_", q, sep = "")))
+      
+      rm(list = paste("sub", "_", y, "_", q, sep = ""))
+      
+      print(nrow(sub))
+      },
+        error = function(err){
+        print("file not found, trying months") 
+    
+        use_months <<- TRUE
+        
+      }
+  )
+
+      }
+     {
+     if(use_months == TRUE){
+       for(m in months){
+        tryCatch({
+          assign(paste("sub", "_", y, "_",m, sep = ""), #or assign on months
+                 as_tibble(read.csv(paste(getwd(),"/",y, "_", m, "_notes", "/", "sub.tsv", sep = ""), sep = "\t")))
+          
+          # add to tibble
+          sub <- bind_rows(sub, get(paste("sub", "_", y, "_",m, sep = "")))
+          
+          rm(list = paste("sub", "_", y, "_",m, sep = ""))
+          print(nrow(sub))
+        },
+        error = function(err2){
+          print("file with month not found, trying next")
+          
+          skip_to_next  <<- TRUE
+          
+        }
+        
+      )
+         if(skip_to_next == TRUE){ 
+          next 
+          }
+         
+       }
+     }
+  }
+   }
+  
+  write.csv(sub, paste("sub_",y,".csv", sep = ""))
+  print(paste("sub_",y,".csv", " is exported", sep = ""))
+ 
+}
+```
+
+
+
+# Cleaning and Joining
+
+
+```{r}
+# Read broad cat
+broad_cat<-as_tibble(read_csv('broad_cat_with_aggregation_v2.csv'))
+
+# Clean and join
+for(y in year){
+  pre <- as_tibble(read_csv(paste("pre_",y,".csv", sep = "")))
+  #tag <- as_tibble(read_tsv('cal.tsv'))
+  #txt<- as_tibble(read_tsv('txt.tsv'))
+  sub<- as_tibble(read.csv(paste("sub_",y, ".csv", sep = ""))) %>% 
+    select(adsh,cik,name,sic,form) %>% 
+    filter(form=="10-K" | form=="10-Q") %>% 
+    mutate(sic=as.numeric(sic)) %>% 
+    filter(sic<6000 | sic>6999)
+
+
+  assign(paste("df_", y, sep = ""), pre %>% filter(stmt=="IS",!is.na(prole),!str_detect(plabel,"]"),
+                        !str_detect(tag,"Abstract$")) %>% 
+    arrange(adsh,report,line) %>% inner_join(sub) %>% arrange(desc(tag)) %>% 
+    # group_by(tag) %>%  summarize(n=n()) %>% 
+    inner_join(broad_cat)  )
+  
+  #write csv
+  write_csv(get(paste("df_", y, sep = "")),paste("df_", y, ".csv", sep = ""))
+  
+  #cognate search
+  assign(paste("cognate_search_", y, sep = ""), eval(as.name(paste("df_", y, sep = ""))) %>% 
+    group_by(tag,broad_cat,plabel) %>% 
+    summarize(n=n()) %>% ungroup() %>% group_by(tag) %>% 
+    mutate(big_n=sum(n)) %>% ungroup() %>% 
+    arrange(desc(big_n),desc(n)) %>% select(-big_n))
+  
+  #export
+  write_csv(get(paste("cognate_search_", y, sep = "")),paste("cognate_search_", y, ".csv", sep = ""))
+
+  
+}
+```
+The code generates dataframes for each year.
+Further joining and analysis is done in Python
+
